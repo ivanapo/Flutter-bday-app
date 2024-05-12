@@ -7,10 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+
 class BirthdayCardListview extends StatefulWidget {
   final String searchQuery;
 
-  const BirthdayCardListview({Key? key, required this.searchQuery}) : super(key: key);
+  const BirthdayCardListview({
+    Key? key,
+    required this.searchQuery,
+  }) : super(key: key);
 
   @override
   State<BirthdayCardListview> createState() => _BirthdayCardListviewState();
@@ -19,45 +23,55 @@ class BirthdayCardListview extends StatefulWidget {
 class _BirthdayCardListviewState extends State<BirthdayCardListview> {
   final ScrollController _scrollController = ScrollController();
 
-List<Birthday> searchBirthdaysByName(String name) {
-
-  List<Birthday> searchResults = birthdayList.where((birthday) => birthday.name.toLowerCase().contains(name.toLowerCase())).toList();
-
-  // print("Search Results:");
-  // for (var birthday in searchResults) {
-  //   print("Name: ${birthday.name}");
-  // }
-
-  return searchResults;
-}
+  List<Birthday> filteredBirthdays = birthdayList;
 
   @override
-  Widget build(BuildContext context) {
-    List<Birthday> filteredBirthdays = searchBirthdaysByName(widget.searchQuery);
-  // print("Search Results:");
-  // for (var birthday in filteredBirthdays) {
-  //   print("Name: ${birthday.name}");
-  // }
-    return Expanded(
-      child: RawScrollbar(
-        thumbColor: Constants.lighterGrey,
-        radius: const Radius.circular(20),
-        thickness: 5,
-        thumbVisibility: true,
-        controller: _scrollController,
-        child: ListView.builder(
-          controller: _scrollController,
-          itemCount: filteredBirthdays.length,
-          itemBuilder: (context, index) {
-            return birthdayCardList(filteredBirthdays, index);
-          },
-        ),
-      ),
-    );
+  void didUpdateWidget(covariant BirthdayCardListview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchQuery != widget.searchQuery) {
+      _applyFilter();
+    }
   }
 
-  Column birthdayCardList(List<Birthday> filteredBirthdays, int index) {
+  void _applyFilter() {
+    setState(() {
+      filteredBirthdays = birthdayList
+          .where((birthday) => birthday.name
+              .toLowerCase()
+              .contains(widget.searchQuery.toLowerCase()))
+          .toList();
+    });
+  }
 
+@override
+Widget build(BuildContext context) {
+  return Expanded(
+    child: RawScrollbar(
+      thumbColor: Constants.lighterGrey,
+      radius: const Radius.circular(20),
+      thickness: 5,
+      thumbVisibility: true,
+      controller: _scrollController,
+      child: filteredBirthdays.isEmpty
+          ? Text(
+              AppLocalizations.of(context)!.noBirthdaysFound,
+              style: TextStyle(
+                color: Constants.whiteSecondary,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            )
+          : ListView.builder(
+              controller: _scrollController,
+              itemCount: filteredBirthdays.length,
+              itemBuilder: (context, index) {
+                return birthdayCardList(index);
+              },
+            ),
+    ),
+  );
+}
+  Column birthdayCardList(int index) {
     filteredBirthdays.sort(
       (a, b) => Calculator.remainingDaysTillBirthday(a.date).compareTo(
         Calculator.remainingDaysTillBirthday(b.date),
@@ -68,12 +82,13 @@ List<Birthday> searchBirthdaysByName(String name) {
       children: [
         Container(
           padding: const EdgeInsets.all(15.0),
-          child: slidableBirthdayCard(index, filteredBirthdays[index],filteredBirthdays),
+          child: slidableBirthdayCard(index, filteredBirthdays[index]),
         ),
       ],
     );
   }
-  Slidable slidableBirthdayCard(int index, Birthday item, List<Birthday> filteredBirthdays) {
+
+  Slidable slidableBirthdayCard(int index, Birthday item) {
     return Slidable(
       key: UniqueKey(),
       endActionPane: ActionPane(
@@ -85,7 +100,7 @@ List<Birthday> searchBirthdaysByName(String name) {
         ),
         extentRatio: 0.25,
         children: [
-          slideableAction(index, item),
+          slidableAction(index, item),
         ],
       ),
       child: Container(
@@ -98,7 +113,7 @@ List<Birthday> searchBirthdaysByName(String name) {
     );
   }
 
-  SlidableAction slideableAction(int index, Birthday item) {
+  SlidableAction slidableAction(int index, Birthday item) {
     return SlidableAction(
       onPressed: (context) {
         deleteBirthday(index, context, item);
@@ -113,7 +128,8 @@ List<Birthday> searchBirthdaysByName(String name) {
 
   void deleteBirthday(int index, BuildContext context, Birthday item) {
     setState(() {
-      removeBirthday(birthdayList.elementAt(index).birthdayId);
+      removeBirthday(filteredBirthdays.elementAt(index).birthdayId);
+      filteredBirthdays.removeAt(index);
     });
 
     ScaffoldMessenger.of(context).showSnackBar(dismissibleSnackBar(item));
@@ -139,9 +155,5 @@ List<Birthday> searchBirthdaysByName(String name) {
         ],
       ),
     );
-  }
-
-  void cancelDeletion() {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
   }
 }

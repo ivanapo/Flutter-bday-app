@@ -56,6 +56,9 @@
     "about": "About",
 
     "aboutInfo": "Project application for UACS 'Software Development' 📱💻️",
+
+    "noBirthdaysFound": "No birthdays found with that name",
+
     "version": "Version",
     "dependencies": "Dependencies",
 

@@ -18,9 +18,9 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   String _searchQuery = '';
 
-  void _runFilter(String enteredKeyword) {
+  void _runFilter(String name) {
     setState(() {
-      _searchQuery = enteredKeyword;
+      _searchQuery = name;
     });
   }
 
