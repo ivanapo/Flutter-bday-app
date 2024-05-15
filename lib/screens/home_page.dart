@@ -17,6 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   String _searchQuery = '';
+  int _selectedMonth = DateTime.now().month;
 
   void _runFilter(String name) {
     setState(() {
@@ -57,21 +58,67 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               padding: const EdgeInsets.all(10.0),
               child: TextField(
                 style: TextStyle(
-                color: Constants.whiteSecondary,
-              ),
+                  color: Constants.whiteSecondary,
+                ),
                 onChanged: (value) => _runFilter(value),
                 decoration: InputDecoration(
                   labelText: 'Search',
-                  suffixIcon: Icon(Icons.search),
+                  suffix: IconButton(
+                    icon: Icon(Icons.clear, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                      // Call removeFilters method after resetting the search query and selected month
+                      BirthdayCardListview(
+                              searchQuery: _searchQuery,
+                              selectedMonth: _selectedMonth)
+                          .removeFilters();
+                    },
+                  ),
                 ),
               ),
             ),
-            BirthdayCardListview(searchQuery: _searchQuery),
+            DropdownButton<int>(
+              value: _selectedMonth,
+              onChanged: (int? value) {
+                setState(() {
+                  _selectedMonth = value!;
+                });
+              },
+              items: List<DropdownMenuItem<int>>.generate(
+                12,
+                (int index) => DropdownMenuItem<int>(
+                  value: index + 1,
+                  child: Text(_getMonthName(index + 1)),
+                ),
+              ),
+            ),
+            BirthdayCardListview(
+                searchQuery: _searchQuery, selectedMonth: _selectedMonth),
             addBirthdayButton(context),
           ],
         ),
       ),
     );
+  }
+
+  String _getMonthName(int month) {
+    final monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    return monthNames[month - 1];
   }
 
   AppBar appBar() {
@@ -112,31 +159,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           },
         ));
       },
-    );
-  }
-
-  Widget emptyPageText() {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            AppLocalizations.of(context)!.addBirthday,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: Constants.normalFontSize,
-              color: Constants.greyPrimary,
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(top: 10.0),
-            child: const Icon(
-              Icons.keyboard_double_arrow_down_rounded,
-              color: Constants.lighterGrey,
-            ),
-          )
-        ],
-      ),
     );
   }
 
